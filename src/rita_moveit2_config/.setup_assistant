@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: rita_description
+    relative_path: urdf/RITA.urdf
+  srdf:
+    relative_path: config/RITA.srdf
+  package_settings:
+    author_name: shreyas pouli
+    author_email: shreyas148@gmail.com
+    generated_timestamp: 1772311096
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity

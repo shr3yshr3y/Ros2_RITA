@@ -1,0 +1,22 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    rita_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+rita_arm_controller:
+  ros__parameters:
+    joints:
+      - base_Revolute-1
+      - link_2_Revolute-2
+      - link_3_Revolute-3
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity

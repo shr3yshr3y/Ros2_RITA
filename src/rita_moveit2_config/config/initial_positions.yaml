@@ -1,0 +1,6 @@
+# Default initial positions for RITA's ros2_control fake system
+
+initial_positions:
+  base_Revolute-1: 0
+  link_2_Revolute-2: 0
+  link_3_Revolute-3: 0

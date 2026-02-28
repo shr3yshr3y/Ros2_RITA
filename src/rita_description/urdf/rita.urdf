@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="RITA">
+    
+    <link name="world" />
+    <joint name="world_to_base" type="fixed">
+        <parent link="world" />
+        <child link="base" />
+    </joint>
+
+    <link name="base">
+        <inertial>
+            <origin xyz="-0.0010387734031772821 0.0032887788583607904 0.029061382994366745" rpy="0.0 0.0 0.0" />
+            <mass value="1.3807206259037155" />
+            <inertia ixx="0.006361863192708521" iyy="0.006072673603725494" izz="0.011180227078648387" ixy="0.0002134397843264139" iyz="2.921107855617803e-05" ixz="-8.29421350332098e-05" />
+        </inertial>
+        <visual name="base_visual">
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/base.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="base_collision">
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/base.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="link_2">
+        <inertial>
+            <origin xyz="0.00045615534764991176 1.7605326975346875e-06 0.028727326520499332" rpy="0.0 -0.0 0.0" />
+            <mass value="0.13119686671649705" />
+            <inertia ixx="8.026019881573359e-05" iyy="8.440245819876812e-05" izz="8.423074716730033e-05" ixy="2.4951187323767607e-09" iyz="-8.095948235126802e-10" ixz="-8.347656813512836e-07" />
+        </inertial>
+        <visual name="link_2_visual">
+            <origin xyz="3.774758283725532e-16 -2.182975978891114e-16 -0.052000000000000705" rpy="0.0 -0.0 0.0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/link_2.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="link_2_collision">
+            <origin xyz="3.774758283725532e-16 -2.182975978891114e-16 -0.052000000000000705" rpy="0.0 -0.0 0.0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/link_2.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="link_3">
+        <inertial>
+            <origin xyz="0.08018228279440866 -5.69748474494465e-06 -0.018908311465050058" rpy="0.0 -0.0 0.0" />
+            <mass value="0.10291815116636557" />
+            <inertia ixx="2.4015662854688252e-05" iyy="0.00010515449575152543" izz="9.37759946723557e-05" ixy="-5.279686960063304e-10" iyz="-2.4860078537116834e-09" ixz="-2.9339308574815776e-07" />
+        </inertial>
+        <visual name="link_3_visual">
+            <origin xyz="-0.10855585000000074 2.170599590232697e-16 -0.019699784117529456" rpy="-3.141592653589793 -1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/link_3.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="link_3_collision">
+            <origin xyz="-0.10855585000000074 2.170599590232697e-16 -0.019699784117529456" rpy="-3.141592653589793 -1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/link_3.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="link_4">
+        <inertial>
+            <origin xyz="0.05907679536014832 1.3241284199791243e-05 -0.018603339791167257" rpy="0.0 -0.0 0.0" />
+            <mass value="0.0395172357706273" />
+            <inertia ixx="1.444674707735672e-05" iyy="4.54457446293537e-05" izz="3.623134838273787e-05" ixy="-2.0959854557372372e-08" iyz="3.895204094697039e-10" ixz="2.263440457663169e-07" />
+        </inertial>
+        <visual name="link_4_visual">
+            <origin xyz="-0.21855585000000072 2.206235122520802e-16 -0.019700004117528848" rpy="-3.141592653589793 -1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/link_4.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="link_4_collision">
+            <origin xyz="-0.21855585000000072 2.206235122520802e-16 -0.019700004117528848" rpy="-3.141592653589793 -1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/link_4.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="camera">
+        <inertial>
+            <origin xyz="-4.11752881039352e-09 -1.0321395147290178e-16 8.506853132963954e-05" rpy="0.0 -0.0 0.0" />
+            <mass value="6.940939469065224e-06" />
+            <inertia ixx="2.579124855976622e-12" iyy="2.579124855976622e-12" izz="5.106205024741313e-12" ixy="-5.478947916019398e-25" iyz="-3.0079291127978885e-24" ixz="-3.735136479363897e-24" />
+        </inertial>
+        <visual name="camera_visual">
+            <origin xyz="-4.11752884932539e-09 -2.2062269910045085e-16 -0.3262500000000007" rpy="0.0 -0.0 0.0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/camera.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="camera_collision">
+            <origin xyz="-4.11752884932539e-09 -2.2062269910045085e-16 -0.3262500000000007" rpy="0.0 -0.0 0.0" />
+            <geometry>
+                <mesh filename="package://rita_description/meshes/camera.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="base_Revolute-1" type="revolute">
+        <origin xyz="0.0 0.0 0.0517" rpy="0.0 -0.0 0.0" />
+        <parent link="base" />
+        <child link="link_2" />
+        <axis xyz="0.0 0.0 1.0" />
+        <limit lower="-3.14159" upper="3.14159" effort="2.94" velocity="11.1"/>
+    </joint>
+    <joint name="link_2_Revolute-2" type="revolute">
+        <origin xyz="0.0197 0.0 0.056555850000000005" rpy="-3.141592653589793 -1.5707963267948966 0" />
+        <parent link="link_2" />
+        <child link="link_3" />
+        <axis xyz="0.0 0.0 1.0" />
+        <limit lower="-3.14159" upper="3.14159" effort="1.47" velocity="11.1"/>
+    </joint>
+    <joint name="link_3_Revolute-3" type="revolute">
+        <origin xyz="0.11 0.0 2.199999999996649e-07" rpy="0.0 -0.0 0.0" />
+        <parent link="link_3" />
+        <child link="link_4" />
+        <axis xyz="0.0 0.0 1.0" />
+        <limit lower="-3.14159" upper="3.14159" effort="2.94" velocity="11.1"/>
+    </joint>
+    <joint name="link_4_Rigid-4" type="fixed">
+        <origin xyz="0.10794414999999997 0.0 -0.0197" rpy="-3.141592653589793 -1.5707963267948966 0" />
+        <parent link="link_4" />
+        <child link="camera" />
+    </joint>
+
+    <ros2_control name="GazeboSimSystem" type="system">
+        <hardware>
+            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </hardware>
+        <joint name="base_Revolute-1">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="link_2_Revolute-2">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="link_3_Revolute-3">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+    </ros2_control>
+
+    <gazebo>
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+            <parameters>$(find rita_gazebo)/config/ros2_controllers.yaml</parameters>
+        </plugin>
+    </gazebo>
+
+</robot>

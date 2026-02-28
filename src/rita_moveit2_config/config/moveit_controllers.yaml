@@ -1,0 +1,14 @@
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - rita_arm_controller
+
+  rita_arm_controller:
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - base_Revolute-1
+      - link_2_Revolute-2
+      - link_3_Revolute-3
