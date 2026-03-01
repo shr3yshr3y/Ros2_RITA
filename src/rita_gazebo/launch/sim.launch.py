@@ -45,11 +45,16 @@ def generate_launch_description():
         arguments=['-topic', 'robot_description', '-name', 'rita', '-allow_renaming', 'true']
     )
 
-    # 4. Clock Bridge (Crucial for simulation time synchronization)
-    clock_bridge = Node(
+    # 5. Clock and Camera Bridge
+    bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
-        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.JointState', 
+            '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo'
+        ],
         output='screen'
     )
 
@@ -86,7 +91,7 @@ def generate_launch_description():
         node_robot_state_publisher,
         gazebo,
         spawn_entity,
-        clock_bridge,
+        bridge,
         delay_broadcaster,
         delay_arm_controller
     ])
