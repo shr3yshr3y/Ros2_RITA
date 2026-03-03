@@ -12,6 +12,7 @@
                 <param name="id">3</param>
                 <param name="type">pos</param>
                 <param name="offset">3.14159265</param>
+                <param name="direction">-1.0</param>
                 
                 <command_interface name="position"/>
                 <state_interface name="position">
@@ -26,6 +27,7 @@
                 <param name="id">2</param>
                 <param name="type">pos</param>
                 <param name="offset">3.14159265</param>
+                <param name="direction">-1.0</param>
                 
                 <command_interface name="position"/>
                 <state_interface name="position">
@@ -40,6 +42,7 @@
                 <param name="id">1</param>
                 <param name="type">pos</param>
                 <param name="offset">3.14159265</param>
+                <param name="direction">-1.0</param>
                 
                 <command_interface name="position"/>
                 <state_interface name="position">

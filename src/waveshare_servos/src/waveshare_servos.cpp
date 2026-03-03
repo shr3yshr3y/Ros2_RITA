@@ -19,8 +19,11 @@ hardware_interface::CallbackReturn WaveshareServos::on_init(
   	{
     	return hardware_interface::CallbackReturn::ERROR;
   	}
-	// check urdf definitions
+	
+	// Initialize offset and direction vectors
 	pos_offsets_.resize(info_.joints.size(), 0.0);
+	directions_.resize(info_.joints.size(), 1.0);
+	
 	int i = 0;
 	for (const hardware_interface::ComponentInfo & joint : info_.joints)
 	{
@@ -90,11 +93,18 @@ hardware_interface::CallbackReturn WaveshareServos::on_init(
 				"a joint has the wrong type, it should be vel or pos");
 			return hardware_interface::CallbackReturn::ERROR;
 		}
-		// save pose offsets to work around motor movement limitations
+		
+		// Parse Pose Offsets
 		auto offset = joint.parameters.find("offset");
     	if (offset != joint.parameters.end())
     	{
       		pos_offsets_[i] = std::stod(offset->second);  
+    	}
+		// Parse Direction Multiplier
+		auto direction = joint.parameters.find("direction");
+    	if (direction != joint.parameters.end())
+    	{
+      		directions_[i] = std::stod(direction->second);  
     	}
 		i++;
 	}
@@ -195,7 +205,7 @@ hardware_interface::CallbackReturn WaveshareServos::on_activate(
 	for (size_t i = 0; i < all_ids_.size(); i++)
   	{
     	double init_raw_pos = get_position(all_ids_[i]);
-    	pos_cmds_[i] = init_raw_pos - pos_offsets_[i];
+    	pos_cmds_[i] = (init_raw_pos - pos_offsets_[i]) * directions_[i];
 	}
 	return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -220,9 +230,9 @@ hardware_interface::return_type WaveshareServos::read(
 	for (size_t i = 0; i < all_ids_.size(); i++)
 	{
 		double raw_pos = get_position(all_ids_[i]);
-    	pos_states_[i] = raw_pos - pos_offsets_[i];
-		vel_states_[i] = get_velocity(all_ids_[i]);
-		torq_states_[i] = get_torque(all_ids_[i]);
+    	pos_states_[i] = (raw_pos - pos_offsets_[i]) * directions_[i];
+		vel_states_[i] = get_velocity(all_ids_[i]) * directions_[i];
+		torq_states_[i] = get_torque(all_ids_[i]) * directions_[i];
 		temp_states_[i] = get_temperature(all_ids_[i]);
 	}
 	return hardware_interface::return_type::OK;
@@ -233,13 +243,14 @@ hardware_interface::return_type WaveshareServos::write(
 {
 	for (size_t i = 0; i < pos_is_.size(); i++)
 	{
-		double pos = pos_cmds_[pos_is_[i]] + pos_offsets_[pos_is_[i]];
+		double pos = (pos_cmds_[pos_is_[i]] * directions_[pos_is_[i]]) + pos_offsets_[pos_is_[i]];
 		p_pos_ar_[i] = (pos * steps_) / (2 * M_PI);
-		p_vel_ar_[i] = (vel_cmds_[pos_is_[i]] * steps_) / (2 * M_PI);
+        // Important: Speed must be positive since it's an unsigned 16-bit integer!
+		p_vel_ar_[i] = std::abs((vel_cmds_[pos_is_[i]] * steps_) / (2 * M_PI));
 	}
 	for (size_t i = 0; i < vel_is_.size(); i++)
 	{
-		v_vel_ar_[i] = (vel_cmds_[vel_is_[i]] * steps_) / (2 * M_PI);
+		v_vel_ar_[i] = (vel_cmds_[vel_is_[i]] * directions_[vel_is_[i]] * steps_) / (2 * M_PI);
 	}
     sm_st.SyncWritePosEx(p_ids_pnt_, static_cast<u8>(pos_ids_.size()), 
 		p_pos_ar_, p_vel_ar_, p_acc_ar_); 

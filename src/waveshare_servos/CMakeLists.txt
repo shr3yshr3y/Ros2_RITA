@@ -62,6 +62,15 @@ target_include_directories(calibrate_midpoint PUBLIC
 target_link_libraries(calibrate_midpoint waveshare_servos)
 ament_target_dependencies(calibrate_midpoint rclcpp)
 
+# --- NEW: Add the RemoveLimits node ---
+add_executable(remove_limits src/remove_limits.cpp)
+target_include_directories(remove_limits PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(remove_limits waveshare_servos)
+ament_target_dependencies(remove_limits rclcpp)
+
 # Export hardware plugins
 pluginlib_export_plugin_description_file(hardware_interface waveshare_servos.xml)
 
@@ -88,7 +97,7 @@ install(TARGETS waveshare_servos
   RUNTIME DESTINATION bin
 )
 install(
-  TARGETS set_id calibrate_midpoint
+  TARGETS set_id calibrate_midpoint remove_limits
   DESTINATION lib/${PROJECT_NAME}
 )
 
