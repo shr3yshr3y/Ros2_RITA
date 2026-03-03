@@ -130,34 +130,7 @@
         <child link="camera" />
     </joint>
 
-    <ros2_control name="GazeboSimSystem" type="system">
-        <hardware>
-            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-        </hardware>
-        <joint name="base_Revolute-1">
-            <command_interface name="position"/>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-        <joint name="link_2_Revolute-2">
-            <command_interface name="position"/>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-        <joint name="link_3_Revolute-3">
-            <command_interface name="position"/>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-    </ros2_control>
-
-    <gazebo>
-        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-            <parameters>$(find rita_gazebo)/config/ros2_controllers.yaml</parameters>
-        </plugin>
-    </gazebo>
-
-        <gazebo reference="base">
+    <gazebo reference="base">
         <material>Gazebo/Grey</material>
     </gazebo>
     <gazebo reference="link_2">
