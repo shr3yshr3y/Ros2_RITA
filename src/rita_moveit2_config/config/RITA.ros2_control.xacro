@@ -1,58 +1,86 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:macro name="RITA_ros2_control" params="name initial_positions_file">
+    <xacro:macro name="RITA_ros2_control" params="name initial_positions_file use_gazebo:=false">
         <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
 
-        <ros2_control name="${name}" type="system">
-            <hardware>
-                <plugin>waveshare_servos/WaveshareServos</plugin>
-            </hardware>
+        <xacro:if value="${use_gazebo}">
+            <ros2_control name="GazeboSimSystem" type="system">
+                <hardware>
+                    <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+                </hardware>
+                <joint name="base_Revolute-1">
+                    <command_interface name="position"/>
+                    <state_interface name="position"/>
+                    <state_interface name="velocity"/>
+                </joint>
+                <joint name="link_2_Revolute-2">
+                    <command_interface name="position"/>
+                    <state_interface name="position"/>
+                    <state_interface name="velocity"/>
+                </joint>
+                <joint name="link_3_Revolute-3">
+                    <command_interface name="position"/>
+                    <state_interface name="position"/>
+                    <state_interface name="velocity"/>
+                </joint>
+            </ros2_control>
 
-            <joint name="base_Revolute-1">
-                <param name="id">3</param>
-                <param name="type">pos</param>
-                <param name="offset">3.14159265</param>
-                <param name="direction">-1.0</param>
-                
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['base_Revolute-1']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-                <state_interface name="torque"/>
-                <state_interface name="temperature"/>
-            </joint>
+            <gazebo>
+                <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+                    <parameters>$(find rita_gazebo)/config/ros2_controllers.yaml</parameters>
+                </plugin>
+            </gazebo>
+        </xacro:if>
 
-            <joint name="link_2_Revolute-2">
-                <param name="id">2</param>
-                <param name="type">pos</param>
-                <param name="offset">3.14159265</param>
-                <param name="direction">-1.0</param>
-                
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['link_2_Revolute-2']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-                <state_interface name="torque"/>
-                <state_interface name="temperature"/>
-            </joint>
+        <xacro:unless value="${use_gazebo}">
+            <ros2_control name="${name}" type="system">
+                <hardware>
+                    <plugin>waveshare_servos/WaveshareServos</plugin>
+                </hardware>
 
-            <joint name="link_3_Revolute-3">
-                <param name="id">1</param>
-                <param name="type">pos</param>
-                <param name="offset">3.14159265</param>
-                <param name="direction">-1.0</param>
-                
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['link_3_Revolute-3']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-                <state_interface name="torque"/>
-                <state_interface name="temperature"/>
-            </joint>
+                <joint name="base_Revolute-1">
+                    <param name="id">3</param>
+                    <param name="type">pos</param>
+                    <param name="offset">3.14159265</param>
+                    <param name="direction">-1.0</param>
+                    <command_interface name="position"/>
+                    <state_interface name="position">
+                      <param name="initial_value">${initial_positions['base_Revolute-1']}</param>
+                    </state_interface>
+                    <state_interface name="velocity"/>
+                    <state_interface name="torque"/>
+                    <state_interface name="temperature"/>
+                </joint>
 
-        </ros2_control>
+                <joint name="link_2_Revolute-2">
+                    <param name="id">2</param>
+                    <param name="type">pos</param>
+                    <param name="offset">3.14159265</param>
+                    <param name="direction">-1.0</param>
+                    <command_interface name="position"/>
+                    <state_interface name="position">
+                      <param name="initial_value">${initial_positions['link_2_Revolute-2']}</param>
+                    </state_interface>
+                    <state_interface name="velocity"/>
+                    <state_interface name="torque"/>
+                    <state_interface name="temperature"/>
+                </joint>
+
+                <joint name="link_3_Revolute-3">
+                    <param name="id">1</param>
+                    <param name="type">pos</param>
+                    <param name="offset">3.14159265</param>
+                    <param name="direction">-1.0</param>
+                    <command_interface name="position"/>
+                    <state_interface name="position">
+                      <param name="initial_value">${initial_positions['link_3_Revolute-3']}</param>
+                    </state_interface>
+                    <state_interface name="velocity"/>
+                    <state_interface name="torque"/>
+                    <state_interface name="temperature"/>
+                </joint>
+            </ros2_control>
+        </xacro:unless>
+
     </xacro:macro>
 </robot>

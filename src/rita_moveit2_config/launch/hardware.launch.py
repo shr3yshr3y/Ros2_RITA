@@ -7,8 +7,11 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 def generate_launch_description():
     # Load MoveIt configs, which will read your updated RITA.ros2_control.xacro
-    moveit_config = MoveItConfigsBuilder("RITA", package_name="rita_moveit2_config").to_moveit_configs()
-
+    moveit_config = (
+        MoveItConfigsBuilder("RITA", package_name="rita_moveit2_config")
+        .robot_description(mappings={"use_gazebo": "false"})
+        .to_moveit_configs()
+    )
     # Node to start the actual ros2_control framework with your hardware interface
     control_node = Node(
         package="controller_manager",

@@ -1,14 +1,12 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="RITA">
     <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+    
+    <xacro:arg name="use_gazebo" default="false" />
 
-    <!-- Import RITA urdf file -->
     <xacro:include filename="$(find rita_description)/urdf/rita.urdf" />
 
-    <!-- Import control_xacro -->
     <xacro:include filename="RITA.ros2_control.xacro" />
 
-
-    <xacro:RITA_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
-
+    <xacro:RITA_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)" use_gazebo="$(arg use_gazebo)"/>
 </robot>

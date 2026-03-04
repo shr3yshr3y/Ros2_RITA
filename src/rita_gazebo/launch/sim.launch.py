@@ -5,21 +5,21 @@ from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-import xacro
+from launch.substitutions import Command
 
 def generate_launch_description():
     # File Paths
-    pkg_rita_description = get_package_share_directory('rita_description')
     pkg_rita_gazebo = get_package_share_directory('rita_gazebo')
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
+    pkg_rita_moveit2_config = get_package_share_directory('rita_moveit2_config') 
     
-    urdf_file = os.path.join(pkg_rita_description, 'urdf', 'rita.urdf')
+    # Point to the MoveIt Xacro file instead of the raw URDF
+    urdf_file = os.path.join(pkg_rita_moveit2_config, 'config', 'RITA.urdf.xacro')
     world_file = os.path.join(pkg_rita_gazebo, 'worlds', 'empty.world')
 
-    # Parse URDF
-    doc = xacro.parse(open(urdf_file))
-    xacro.process_doc(doc)
-    robot_description = {'robot_description': doc.toxml(), 'use_sim_time': True}
+    # Parse URDF using Command and pass use_gazebo:=true
+    robot_description_content = Command(['xacro ', urdf_file, ' use_gazebo:=true'])
+    robot_description = {'robot_description': robot_description_content, 'use_sim_time': True}
 
     # 1. Robot State Publisher
     node_robot_state_publisher = Node(
@@ -45,7 +45,7 @@ def generate_launch_description():
         arguments=['-topic', 'robot_description', '-name', 'rita', '-allow_renaming', 'true']
     )
 
-    # 5. Clock and Camera Bridge
+    # 4. Clock and Camera Bridge
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -73,6 +73,22 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )
 
+# 6. MoveIt 2 and RViz
+    move_group_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_rita_moveit2_config, 'launch', 'move_group.launch.py') # <-- Fixed name here
+        ),
+        launch_arguments={'use_sim_time': 'true'}.items()
+    )
+
+    rviz_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_rita_moveit2_config, 'launch', 'moveit_rviz.launch.py')
+        ),
+        launch_arguments={'use_sim_time': 'true'}.items()
+    )
+
+    # --- SEQUENCING ---
     # Ensure controllers spawn AFTER the robot is successfully loaded in Gazebo
     delay_broadcaster = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -86,6 +102,14 @@ def generate_launch_description():
             on_exit=[spawn_arm_controller],
         )
     )
+    
+    # Ensure MoveIt and RViz spawn AFTER the arm controller is up
+    delay_moveit_and_rviz = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=spawn_arm_controller,
+            on_exit=[move_group_node, rviz_node],
+        )
+    )
 
     return LaunchDescription([
         node_robot_state_publisher,
@@ -93,5 +117,6 @@ def generate_launch_description():
         spawn_entity,
         bridge,
         delay_broadcaster,
-        delay_arm_controller
+        delay_arm_controller,
+        delay_moveit_and_rviz
     ])

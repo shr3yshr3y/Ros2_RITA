@@ -125,7 +125,7 @@
         <limit lower="-2.09" upper="2.09" effort="2.94" velocity="11.1"/>
     </joint>
     <joint name="link_4_Rigid-4" type="fixed">
-        <origin xyz="0.10794414999999997 0.0 -0.0197" rpy="-3.141592653589793 0 0" />
+        <origin xyz="0.10794414999999997 0.0 -0.0197" rpy="-3.141592653589793 -1.5707963267948966 0" />
         <parent link="link_4" />
         <child link="camera" />
     </joint>
@@ -146,8 +146,9 @@
         <material>Gazebo/Black</material>
     </gazebo>
 
-    <gazebo reference="camera">
+<gazebo reference="camera">
         <sensor name="pi_camera" type="camera">
+            <pose>0 0 0 1.5708 -1.5708 0</pose> 
             <always_on>true</always_on>
             <update_rate>30.0</update_rate>
             <camera name="pi_camera">
