@@ -2,78 +2,62 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import TransformStamped
 import tf2_ros
-import tf2_geometry_msgs
 
-class VisualServoNode(Node):
+class FaceTFBroadcaster(Node):
     def __init__(self):
-        super().__init__('visual_servo_node')
+        super().__init__('face_tf_broadcaster')
         
         self.subscription = self.create_subscription(
             Float32MultiArray,
             '/target_bounding_box',
-            self.servo_callback,
+            self.bbox_callback,
             10)
             
-        self.publisher = self.create_publisher(Float32MultiArray, '/target_coords_xyz', 10)
+        # Initialize the transform broadcaster
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
         
-        # --- TF2 Setup: To track the position and pointing direction of the arm ---
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        # Camera constants for 1920x1080 resolution
+        self.focal_length = 1145.0  # Approximated focal length for a standard 1080p webcam FOV
+        self.real_face_width = 0.15 # 15cm average human face width
         
-        # Camera constants for 320x320 resolution
-        self.focal_length = 200.0  
-        self.real_face_width = 0.15 # 15cm
-        
-        self.get_logger().info("Visual Servo Node started. Computing TRUE GLOBAL XYZ...")
+        self.get_logger().info("Face TF Broadcaster started. Open RViz to see the 'face_target' frame!")
 
-    def servo_callback(self, msg):
+    def bbox_callback(self, msg):
         cx, cy, w, h = msg.data
         
-        # 1. Calculate Local Camera Coordinates
+        # 1. Calculate depth (Z-distance from camera)
         depth = (self.real_face_width * self.focal_length) / w
-        offset_x = (cx - 160) * depth / self.focal_length
-        offset_y = (cy - 160) * depth / self.focal_length
         
-        # 2. Create a Point in the Camera's Local Frame
-        point_cam = PointStamped()
-        point_cam.header.frame_id = 'camera' 
-        point_cam.header.stamp = self.get_clock().now().to_msg()
+        # 2. Use the TRUE center of your 1080p camera image
+        image_center_x = 960.0 
+        image_center_y = 540.0 
         
-        # NOTE: Standard ROS camera optical frames point Z forward, X right, Y down.
-        # If your 'camera' URDF link points X forward instead (like a standard mechanical link),
-        # you will need to swap these to: x = depth, y = -offset_x, z = -offset_y
-        point_cam.point.x = offset_x
-        point_cam.point.y = offset_y
-        point_cam.point.z = depth
+        offset_x = (cx - image_center_x) * depth / self.focal_length
+        offset_y = (cy - image_center_y) * depth / self.focal_length
         
-        # 3. Apply the TF2 Math (This handles End Effector Position AND Pointing Direction)
-        try:
-            # Get the exact matrix bridging the 'camera' to the global 'base'
-            transform = self.tf_buffer.lookup_transform('base', 'camera', rclpy.time.Time())
-            
-            # Project the local point into the global base frame
-            point_base = tf2_geometry_msgs.do_transform_point(point_cam, transform)
-            
-            true_x = point_base.point.x
-            true_y = point_base.point.y
-            true_z = point_base.point.z
-            
-            # Publish the TRUE Global XYZ target
-            out_msg = Float32MultiArray()
-            out_msg.data = [float(true_x), float(true_y), float(true_z)]
-            self.publisher.publish(out_msg)
-            
-            # Print it so you can see the math working!
-            self.get_logger().info(f"Target at True Base XYZ: [{true_x:.2f}, {true_y:.2f}, {true_z:.2f}]")
-            
-        except Exception as e:
-            self.get_logger().warn(f"Waiting for arm positional data (TF Tree): {e}")
+        # 3. Create the Transform Message
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = 'camera'
+        t.child_frame_id = 'face_target'
+        
+        # Optical Frame Mapping (Blue Z is forward)
+        t.transform.translation.x = float(offset_x)  
+        t.transform.translation.y = float(offset_y)  
+        t.transform.translation.z = float(depth)
+        
+        t.transform.rotation.x = 0.0
+        t.transform.rotation.y = 0.0
+        t.transform.rotation.z = 0.0
+        t.transform.rotation.w = 1.0
+        
+        self.tf_broadcaster.sendTransform(t)
 
 def main(args=None):
     rclpy.init(args=args)
-    node = VisualServoNode()
+    node = FaceTFBroadcaster()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
