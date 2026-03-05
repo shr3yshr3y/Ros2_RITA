@@ -6,6 +6,7 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from std_msgs.msg import Float32MultiArray
 from cv_bridge import CvBridge
 from ament_index_python.packages import get_package_share_directory
 
@@ -48,6 +49,9 @@ class YoloTpuNode(Node):
             10,
         )
         self.debug_pub = self.create_publisher(Image, '/camera/yolo_debug', 10)
+        
+        # --- ADDED: Publisher for the Bounding Box ---
+        self.bbox_pub = self.create_publisher(Float32MultiArray, '/target_bounding_box', 10)
 
         self.get_logger().info('YOLO face detector ready using models from camera_stuff.')
 
@@ -140,6 +144,17 @@ class YoloTpuNode(Node):
                     self.get_logger().info(
                         f'Face detected confidence={conf:.2f} center=({center_x},{center_y})'
                     )
+
+                    # --- ADDED: Publish to ROS 2 ---
+                    abs_w = w * frame_w
+                    abs_h = h * frame_h
+                    
+                    bbox_msg = Float32MultiArray()
+                    bbox_msg.data = [float(center_x), float(center_y), float(abs_w), float(abs_h)]
+                    self.bbox_pub.publish(bbox_msg)
+                    
+                    # Stop after the first (most confident) face is found to prevent tracking multiple faces
+                    break
 
             self.debug_pub.publish(self.bridge.cv2_to_imgmsg(frame, encoding='bgr8'))
         except Exception as exc:
