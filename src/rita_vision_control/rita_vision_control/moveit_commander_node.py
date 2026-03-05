@@ -4,12 +4,10 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from std_msgs.msg import Float32MultiArray
-from geometry_msgs.msg import PointStamped, Pose
+from geometry_msgs.msg import Point, Pose
 from moveit_msgs.action import MoveGroup
 from moveit_msgs.msg import Constraints, PositionConstraint
 from shape_msgs.msg import SolidPrimitive
-import tf2_ros
-import tf2_geometry_msgs
 import math
 
 class MoveItCommanderNode(Node):
@@ -17,9 +15,6 @@ class MoveItCommanderNode(Node):
         super().__init__('moveit_commander_node')
         
         self.action_client = ActionClient(self, MoveGroup, 'move_action')
-        
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         
         self.subscription = self.create_subscription(
             Float32MultiArray,
@@ -33,59 +28,40 @@ class MoveItCommanderNode(Node):
         # Set this to slightly less than your arm's fully extended length (in meters)
         self.MAX_REACH = 0.25 # 25 centimeters
         
-        self.get_logger().info("MoveIt 2 Commander Node ready. Waiting for XYZ coordinates...")
+        self.get_logger().info("MoveIt 2 Commander Node ready. Waiting for GLOBAL XYZ coordinates...")
 
     def coords_callback(self, msg):
         if self.is_planning:
             return 
             
-        cam_x, cam_y, cam_z = msg.data
+        # These are now TRUE GLOBAL coordinates from the visual servo node!
+        face_x, face_y, face_z = msg.data
         
-        # 1. Map the face in the camera's local 3D space
-        target_pt_cam = PointStamped()
-        target_pt_cam.header.frame_id = 'camera'
-        target_pt_cam.header.stamp = self.get_clock().now().to_msg()
-        target_pt_cam.point.x = cam_x
-        target_pt_cam.point.y = cam_y
-        target_pt_cam.point.z = cam_z
+        # 1. Calculate absolute distance from robot base to the human face
+        distance_to_face = math.sqrt(face_x**2 + face_y**2 + face_z**2)
         
-        try:
-            # 2. Transform the face's location into the global 'base' frame
-            transform = self.tf_buffer.lookup_transform('base', 'camera', rclpy.time.Time())
-            target_pt_base = tf2_geometry_msgs.do_transform_point(target_pt_cam, transform)
+        if distance_to_face < 0.01:
+            return
             
-            face_x = target_pt_base.point.x
-            face_y = target_pt_base.point.y
-            face_z = target_pt_base.point.z
+        # 2. CRITICAL MATH: Keep it reachable!
+        # Scale the target down so it sits perfectly inside the robot's physical reach
+        if distance_to_face > self.MAX_REACH:
+            scale = self.MAX_REACH / distance_to_face
+        else:
+            scale = 1.0 # The face is close enough to reach normally
             
-            # 3. Calculate absolute distance from robot base to the human face
-            distance_to_face = math.sqrt(face_x**2 + face_y**2 + face_z**2)
-            
-            if distance_to_face < 0.01:
-                return
-                
-            # 4. CRITICAL MATH: Keep it reachable!
-            # Scale the target down so it sits perfectly inside the robot's physical reach
-            if distance_to_face > self.MAX_REACH:
-                scale = self.MAX_REACH / distance_to_face
-            else:
-                scale = 1.0 # The face is close enough to reach normally
-                
-            reachable_x = face_x * scale
-            reachable_y = face_y * scale
-            
-            # Ensure the arm doesn't smash into the table/floor trying to look down
-            reachable_z = max(0.1, face_z * scale) 
-            
-            reachable_target = PointStamped()
-            reachable_target.point.x = reachable_x
-            reachable_target.point.y = reachable_y
-            reachable_target.point.z = reachable_z
-            
-            self.send_moveit_goal(reachable_target.point)
-            
-        except Exception as e:
-            self.get_logger().warn(f"Waiting for TF Tree: {e}")
+        reachable_x = face_x * scale
+        reachable_y = face_y * scale
+        
+        # Ensure the arm doesn't smash into the table/floor trying to look down
+        reachable_z = max(0.1, face_z * scale) 
+        
+        reachable_target = Point()
+        reachable_target.x = reachable_x
+        reachable_target.y = reachable_y
+        reachable_target.z = reachable_z
+        
+        self.send_moveit_goal(reachable_target)
 
     def send_moveit_goal(self, target_point):
         self.get_logger().info(f"Target Acquired. Planning to REACHABLE Base XYZ: [{target_point.x:.2f}, {target_point.y:.2f}, {target_point.z:.2f}]")
