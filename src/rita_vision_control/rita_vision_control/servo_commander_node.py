@@ -47,6 +47,7 @@ class ServoCommanderNode(Node):
         self.tilt_speed = 0.0
         
         self.last_msg_time = self.get_clock().now().nanoseconds / 1e9
+        self.last_log_time = 0.0  # Used to throttle debug messages
         
         # Current Joint Positions
         self.current_joint_2_pos = 0.0
@@ -78,8 +79,8 @@ class ServoCommanderNode(Node):
         self.j3_max_neg = -1.57  
         self.j3_limit_tolerance = 0.05 
         
-        # 15 degrees in radians (~0.2618 rad)
-        self.j3_freeze_threshold = 15.0 * (math.pi / 180.0) 
+        # 5 degrees in radians
+        self.j3_freeze_threshold = 5.0 * (math.pi / 180.0) 
         
         self.max_speed = 1.2      
         self.deadzone_xy = 40.0   
@@ -134,12 +135,19 @@ class ServoCommanderNode(Node):
         self.prev_error_y = error_y
         
         # --- DEPTH CONTROL (Linear Scale for Joint 2) ---
-        w_min = self.image_width / 9.0  
-        w_max = self.image_width / 2.0  
+        w_min = self.image_width / 20.0  
+        w_max = self.image_width / 3.0  
         w_clamped = max(min(w, w_max), w_min)
         ratio = (w_clamped - w_min) / (w_max - w_min)
-        target_angle = self.j2_max_pos + (ratio * (self.j2_max_pos - self.j2_max_neg))
+        
+        target_angle = self.j2_max_neg + (ratio * (self.j2_max_pos - self.j2_max_neg))
         position_error = target_angle - self.current_joint_2_pos
+        
+        # Calculate the intended depth velocity before takeover overrides it
+        if abs(position_error) < 0.05:
+            intended_raw_depth = 0.0
+        else:
+            intended_raw_depth = position_error * self.position_kp
             
         # --- JOINT 3 TAKEOVER LOGIC ---
         at_max_limit = self.current_joint_3_pos >= (self.j3_max_pos - self.j3_limit_tolerance)
@@ -149,24 +157,52 @@ class ServoCommanderNode(Node):
         pegged_at_max = at_max_limit and (raw_tilt > 0.0)
         pegged_at_min = at_min_limit and (raw_tilt < 0.0)
         
-        # Check if J3 is within 15 degrees of either limit
+        # Check if J3 is within freeze threshold of either limit
         near_max_limit = self.current_joint_3_pos >= (self.j3_max_pos - self.j3_freeze_threshold)
         near_min_limit = self.current_joint_3_pos <= (self.j3_max_neg + self.j3_freeze_threshold)
         
+        status_msg = "Normal Tracking"
+        
         if pegged_at_max or pegged_at_min:
             # 1. Compensating: J3 is pegged. J2 takes over tilt velocity.
-            # NOTE: If J2 pitches the arm in the *opposite* direction of J3, change this to `-raw_tilt`
             raw_depth = raw_tilt
-            raw_tilt = 0.0  # Stop sending commands to the pegged joint
+            raw_tilt = 0.0  
+            status_msg = "COMPENSATING: J3 locked, J2 taking over tilt"
         elif near_max_limit or near_min_limit:
-            # 2. Frozen: J3 no longer needs to push further, but is within 15 degrees of the limit.
-            raw_depth = 0.0
-        else:
-            # 3. Normal: J3 is far from limits, J2 performs normal distance tracking.
-            if abs(position_error) < 0.05:
-                raw_depth = 0.0
+            # 2. Frozen check: Compare velocity signs to unlock if they share a direction
+            # Using multiplication: a positive product means they have the same sign (same direction)
+            if intended_raw_depth * raw_tilt > 0.0:
+                raw_depth = intended_raw_depth
+                status_msg = "UNLOCKED: J2 and J3 share velocity direction"
             else:
-                raw_depth = position_error * self.position_kp
+                raw_depth = 0.0
+                status_msg = "FROZEN: J3 near limit, J2 halted"
+        else:
+            # 3. Normal tracking
+            raw_depth = intended_raw_depth
+            
+        # --- ENSURE J3 TRACKS FASTER THAN J2 ---
+        # If both joints are moving normally (not in a compensation state)
+        if status_msg != "COMPENSATING: J3 locked, J2 taking over tilt":
+            if abs(raw_tilt) > 0.01 and abs(raw_depth) > 0.01:
+                # If Joint 2 is trying to move faster than Joint 3
+                if abs(raw_depth) >= abs(raw_tilt):
+                    # Scale Joint 2's speed down to 85% of Joint 3's speed (preserving J2's direction)
+                    raw_depth = math.copysign(abs(raw_tilt) * 0.85, raw_depth)
+                    status_msg += " (J2 speed capped by J3)"
+        
+        # --- DEBUG LOGGING ---
+        if current_time - self.last_log_time > 0.5:
+            scale_percent = ratio * 100.0
+            self.get_logger().info(
+                f"\n--- DEBUG INFO ---\n"
+                f"Face Scale: {scale_percent:.1f}%\n"
+                f"J2 Target Angle: {target_angle:.2f} rad\n"
+                f"J2 Current Angle: {self.current_joint_2_pos:.2f} rad\n"
+                f"Status: {status_msg}\n"
+                f"------------------"
+            )
+            self.last_log_time = current_time
         
         # --- CLAMP SPEEDS ---
         self.pan_speed = max(min(raw_pan, self.max_speed), -self.max_speed)
