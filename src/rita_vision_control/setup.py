@@ -26,6 +26,7 @@ setup(
             'yolo_tpu_node = rita_vision_control.yolo_tpu_node:main',
             'visual_servo_node = rita_vision_control.visual_servo_node:main',
             'moveit_commander_node = rita_vision_control.moveit_commander_node:main',
+            'servo_commander_node = rita_vision_control.servo_commander_node:main',
         ],
     },
 )

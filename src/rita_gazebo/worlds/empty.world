@@ -48,5 +48,58 @@
         </visual>
       </link>
     </model>
+
+    <model name='person_standing'>
+      <link name='link'>
+        <inertial>
+          <pose>0 -0.10000000000000001 0.94999999999999996 0 0 0</pose>
+          <mass>80</mass>
+          <inertia>
+            <ixx>24.879999999999999</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>25.73</iyy>
+            <iyz>0</iyz>
+            <izz>2.48</izz>
+          </inertia>
+        </inertial>
+        <collision name='bottom'>
+          <pose>0 -0.10000000000000001 0.01 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.34999999999999998 0.02</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='person'>
+          <pose>0 0 0.02 0.040000000000000001 0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/standing person/3/files/meshes/standing.dae</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name='visual'>
+          <pose>0 0 0.02 0.040000000000000001 0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/standing person/3/files/meshes/standing.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <pose>0 0 0 0 0 0</pose>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-0.040085312033861342 3.2909388184097916 -3.1673366467782627e-11 1.0408340855860852e-23 -2.1618247106668687e-21 -1.539324130558076e-21</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
   </world>
 </sdf>
