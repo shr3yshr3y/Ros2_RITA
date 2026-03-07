@@ -42,7 +42,7 @@ def generate_launch_description():
         package='ros_gz_sim',
         executable='create',
         output='screen',
-        arguments=['-topic', 'robot_description', '-name', 'rita', '-allow_renaming', 'true']
+        arguments=['-topic', 'robot_description', '-name', 'rita', '-z', '0.75', '-allow_renaming', 'true']
     )
 
     # 4. Clock and Camera Bridge

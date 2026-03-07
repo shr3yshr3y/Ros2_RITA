@@ -116,10 +116,15 @@
         <pose>0 0 0 0 0 0</pose>
         <enable_wind>false</enable_wind>
       </link>
-      <pose>-0.040085312033861342 3.2909388184097916 -3.1673366467782627e-11 1.0408340855860852e-23 -2.1618247106668687e-21 -1.539324130558076e-21</pose>
+      <pose>-0.033737290650606142 1.8512699604034424 -7.9850828417983054e-07 -3.5657146560719906e-10 9.4241289224107297e-11 1.6479999307983384e-10</pose>
       <static>false</static>
       <self_collide>false</self_collide>
     </model>
+    <include>
+      <uri>file:///home/shreyas/.gz/fuel/fuel.gazebosim.org/openrobotics/models/dining table/1</uri>
+      <name>DiningTable</name>
+      <pose>0.015927728265523911 -0.12302800267934799 0 0 0 0</pose>
+    </include>
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
       <cast_shadows>true</cast_shadows>

@@ -38,3 +38,4 @@ servo_node:
       lower_singularity_threshold: 100000.0 # Bypassed
       hard_stop_singularity_threshold: 100001.0 # Bypassed
       leaving_singularity_threshold_multiplier: 2.0
+      halt_all_joints_in_joint_mode: false

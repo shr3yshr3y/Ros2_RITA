@@ -98,8 +98,13 @@
         <enable_wind>false</enable_wind>
       </link>
       <pose>-0.040085312033861342 3.2909388184097916 -3.1673366467782627e-11 1.0408340855860852e-23 -2.1618247106668687e-21 -1.539324130558076e-21</pose>
-      <static>false</static>
+      <static>true</static>
       <self_collide>false</self_collide>
     </model>
+    <include>
+      <uri>file:///home/shreyas/.gz/fuel/fuel.gazebosim.org/openrobotics/models/dining table/1</uri>
+      <name>DiningTable</name>
+      <pose>0.015927728265523911 -0.12302800267934799 0 0 0 0</pose>
+    </include>
   </world>
 </sdf>
