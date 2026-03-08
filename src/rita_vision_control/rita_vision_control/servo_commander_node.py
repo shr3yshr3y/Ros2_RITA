@@ -6,6 +6,7 @@ from std_msgs.msg import Float32MultiArray
 from control_msgs.msg import JointJog
 from moveit_msgs.srv import ServoCommandType
 from sensor_msgs.msg import JointState
+from sensor_msgs.msg import CameraInfo  # <-- Added this import
 import math
 
 class ServoCommanderNode(Node):
@@ -35,12 +36,21 @@ class ServoCommanderNode(Node):
             self.joint_state_callback,
             10)
             
+        # --- NEW: Camera Info Subscriber ---
+        self.camera_info_sub = self.create_subscription(
+            CameraInfo,
+            '/camera/camera_info',
+            self.camera_info_callback,
+            10)
+            
         self.joint_pub = self.create_publisher(JointJog, '/servo_node/delta_joint_cmds', 10)
         
         # --- CONTROL VARIABLES ---
+        # These are defaults that will be overwritten dynamically
         self.image_width = 1920.0
         self.center_x = 960.0 
         self.center_y = 540.0 
+        self.resolution_set = False  # Track if we have auto-configured yet
         
         self.pan_speed = 0.0
         self.depth_speed = 0.0
@@ -61,13 +71,13 @@ class ServoCommanderNode(Node):
         self.prev_error_y = 0.0
         
         # --- TUNING & LIMITS PARAMETERS ---
-        self.kp_pan = 0.0015
+        self.kp_pan = 0.003
         self.ki_pan = 0.0001
-        self.kd_pan = 0.0005 
+        self.kd_pan = 0.002 
         
-        self.kp_tilt = 0.0015
+        self.kp_tilt = 0.003
         self.ki_tilt = 0.0001
-        self.kd_tilt = 0.0005
+        self.kd_tilt = 0.002
         
         # Joint 2 Limits (Distance Tracking)
         self.j2_max_pos = 1.57   
@@ -82,12 +92,26 @@ class ServoCommanderNode(Node):
         # 5 degrees in radians
         self.j3_freeze_threshold = 5.0 * (math.pi / 180.0) 
         
-        self.max_speed = 1.2      
+        self.max_speed = 3      
         self.deadzone_xy = 40.0   
         self.max_integral = 500.0 
 
         # Fast internal heartbeat (30Hz)
         self.timer = self.create_timer(0.033, self.timer_callback)
+
+    # --- NEW: Camera Info Callback ---
+    def camera_info_callback(self, msg):
+        # Update resolution only once when the camera connects
+        if not self.resolution_set:
+            self.image_width = float(msg.width)
+            self.center_x = self.image_width / 2.0
+            self.center_y = float(msg.height) / 2.0
+            
+            # Dynamically scale deadzone (e.g., ~2% of image width)
+            self.deadzone_xy = self.image_width * 0.02
+            
+            self.resolution_set = True
+            self.get_logger().info(f"Auto-configured to camera resolution: {msg.width}x{msg.height}")
 
     def joint_state_callback(self, msg):
         try:
@@ -192,6 +216,7 @@ class ServoCommanderNode(Node):
                     status_msg += " (J2 speed capped by J3)"
         
         # --- DEBUG LOGGING ---
+        # Print a debug message every 0.5 seconds to avoid spamming the terminal
         if current_time - self.last_log_time > 0.5:
             scale_percent = ratio * 100.0
             self.get_logger().info(

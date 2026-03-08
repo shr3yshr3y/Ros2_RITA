@@ -26,6 +26,21 @@ def generate_launch_description():
         ],
         output="both",
     )
+    # Node to start the camera driver and publish images to /camera/image_raw
+    camera_node = Node(
+        package='v4l2_camera',
+        executable='v4l2_camera_node',
+        name='v4l2_camera_node',
+        output='screen',
+        parameters=[{
+            'image_size': [1920, 1080],  # Ensure your physical camera supports this!
+            'camera_frame_id': 'camera_link'
+        }],
+        remappings=[
+            ('/image_raw', '/camera/image_raw'),
+            ('/camera_info', '/camera/camera_info')
+        ]
+    )
 
     # Robot State Publisher
     robot_state_publisher = Node(
@@ -86,6 +101,7 @@ def generate_launch_description():
         [
             control_node,
             robot_state_publisher,
+            camera_node,
             joint_state_broadcaster_spawner,
             delay_rita_controller_spawner_after_joint_state_broadcaster_spawner,
             run_move_group_node,  # Added here!
