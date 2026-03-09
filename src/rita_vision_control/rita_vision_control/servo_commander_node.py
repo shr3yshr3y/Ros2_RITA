@@ -6,7 +6,6 @@ from std_msgs.msg import Float32MultiArray
 from control_msgs.msg import JointJog
 from moveit_msgs.srv import ServoCommandType
 from sensor_msgs.msg import JointState
-from sensor_msgs.msg import CameraInfo  # <-- Added this import
 import math
 
 class ServoCommanderNode(Node):
@@ -36,21 +35,13 @@ class ServoCommanderNode(Node):
             self.joint_state_callback,
             10)
             
-        # --- NEW: Camera Info Subscriber ---
-        self.camera_info_sub = self.create_subscription(
-            CameraInfo,
-            '/camera/camera_info',
-            self.camera_info_callback,
-            10)
-            
         self.joint_pub = self.create_publisher(JointJog, '/servo_node/delta_joint_cmds', 10)
         
-        # --- CONTROL VARIABLES ---
-        # These are defaults that will be overwritten dynamically
-        self.image_width = 1920.0
-        self.center_x = 960.0 
-        self.center_y = 540.0 
-        self.resolution_set = False  # Track if we have auto-configured yet
+        # --- CONTROL VARIABLES (Hardcoded to 640x480) ---
+        self.image_width = 640.0
+        self.image_height = 480.0
+        self.center_x = 320.0 
+        self.center_y = 240.0 
         
         self.pan_speed = 0.0
         self.depth_speed = 0.0
@@ -93,25 +84,14 @@ class ServoCommanderNode(Node):
         self.j3_freeze_threshold = 5.0 * (math.pi / 180.0) 
         
         self.max_speed = 3      
-        self.deadzone_xy = 40.0   
+        # Dynamically set deadzone to ~2% of image width (640 * 0.02 = ~12.8 pixels)
+        self.deadzone_xy = self.image_width * 0.02
         self.max_integral = 500.0 
 
         # Fast internal heartbeat (30Hz)
         self.timer = self.create_timer(0.033, self.timer_callback)
-
-    # --- NEW: Camera Info Callback ---
-    def camera_info_callback(self, msg):
-        # Update resolution only once when the camera connects
-        if not self.resolution_set:
-            self.image_width = float(msg.width)
-            self.center_x = self.image_width / 2.0
-            self.center_y = float(msg.height) / 2.0
-            
-            # Dynamically scale deadzone (e.g., ~2% of image width)
-            self.deadzone_xy = self.image_width * 0.02
-            
-            self.resolution_set = True
-            self.get_logger().info(f"Auto-configured to camera resolution: {msg.width}x{msg.height}")
+        
+        self.get_logger().info("Servo Commander Initialized (Hardcoded 640x480)")
 
     def joint_state_callback(self, msg):
         try:
@@ -162,7 +142,10 @@ class ServoCommanderNode(Node):
         w_min = self.image_width / 20.0  
         w_max = self.image_width / 3.0  
         w_clamped = max(min(w, w_max), w_min)
-        ratio = (w_clamped - w_min) / (w_max - w_min)
+        if (w_max - w_min) == 0:
+            ratio = 0.0  # Fallback to prevent crash
+        else:
+            ratio = (w_clamped - w_min) / (w_max - w_min)
         
         target_angle = self.j2_max_neg + (ratio * (self.j2_max_pos - self.j2_max_neg))
         position_error = target_angle - self.current_joint_2_pos

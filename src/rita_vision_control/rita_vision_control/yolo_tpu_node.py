@@ -9,6 +9,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray
 from cv_bridge import CvBridge
 from ament_index_python.packages import get_package_share_directory
+from rclpy.qos import qos_profile_sensor_data
 
 try:
     from pycoral.utils.edgetpu import make_interpreter
@@ -46,7 +47,7 @@ class YoloTpuNode(Node):
             Image,
             '/camera/image_raw',
             self.image_callback,
-            10,
+            qos_profile=qos_profile_sensor_data,
         )
         self.debug_pub = self.create_publisher(Image, '/camera/yolo_debug', 10)
         

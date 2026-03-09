@@ -68,7 +68,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
-        default_value='true',
+        default_value='false',
         description='Use simulation (Gazebo) clock if true'
     )
     

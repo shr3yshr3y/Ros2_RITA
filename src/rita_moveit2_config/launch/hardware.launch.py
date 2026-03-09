@@ -6,13 +6,14 @@ from launch_ros.actions import Node
 from moveit_configs_utils import MoveItConfigsBuilder
 
 def generate_launch_description():
-    # Load MoveIt configs, which will read your updated RITA.ros2_control.xacro
+    # Load MoveIt configs
     moveit_config = (
         MoveItConfigsBuilder("RITA", package_name="rita_moveit2_config")
         .robot_description(mappings={"use_gazebo": "false"})
         .to_moveit_configs()
     )
-    # Node to start the actual ros2_control framework with your hardware interface
+
+    # Node to start the actual ros2_control framework
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -26,20 +27,20 @@ def generate_launch_description():
         ],
         output="both",
     )
-    # Node to start the camera driver and publish images to /camera/image_raw
+
+    # --- UPDATED: Pi Camera Module 3 Node (using camera_ros) ---
     camera_node = Node(
-        package='v4l2_camera',
-        executable='v4l2_camera_node',
-        name='v4l2_camera_node',
+        package='camera_ros',
+        executable='camera_node',
+        name='camera',
         output='screen',
         parameters=[{
-            'image_size': [1920, 1080],  # Ensure your physical camera supports this!
-            'camera_frame_id': 'camera_link'
-        }],
-        remappings=[
-            ('/image_raw', '/camera/image_raw'),
-            ('/camera_info', '/camera/camera_info')
-        ]
+            'width': 1280,      # Module 3 works best at 1280x720 or 1920x1080
+            'height': 720,
+            'camera_name': 'camera',
+            'frame_id': 'camera_link',
+            # 'format': 'YUYV' # Optional: set specific pixel format if needed
+        }]
     )
 
     # Robot State Publisher
@@ -65,7 +66,7 @@ def generate_launch_description():
         arguments=["rita_arm_controller", "--controller-manager", "/controller_manager"],
     )
 
-    # Delay the start of the arm controller until the state broadcaster finishes loading
+    # Delay the start of the arm controller
     delay_rita_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -73,7 +74,7 @@ def generate_launch_description():
         )
     )
 
-    # --- NEW: Start the MoveIt 2 Brain ---
+    # Start the MoveIt 2 Brain
     run_move_group_node = Node(
         package="moveit_ros_move_group",
         executable="move_group",
@@ -101,10 +102,10 @@ def generate_launch_description():
         [
             control_node,
             robot_state_publisher,
-            camera_node,
+            camera_node, # Now using libcamera-based node
             joint_state_broadcaster_spawner,
             delay_rita_controller_spawner_after_joint_state_broadcaster_spawner,
-            run_move_group_node,  # Added here!
+            run_move_group_node,
             rviz_node,
         ]
     )
