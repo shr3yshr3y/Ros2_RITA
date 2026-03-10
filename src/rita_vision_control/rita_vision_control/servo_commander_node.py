@@ -38,10 +38,10 @@ class ServoCommanderNode(Node):
         self.joint_pub = self.create_publisher(JointJog, '/servo_node/delta_joint_cmds', 10)
         
         # --- CONTROL VARIABLES (Hardcoded to 640x480) ---
-        self.image_width = 640.0
-        self.image_height = 480.0
-        self.center_x = 320.0 
-        self.center_y = 240.0 
+        self.image_width = 1920.0
+        self.image_height = 1080.0
+        self.center_x = self.image_width/2
+        self.center_y = self.image_height/2
         
         self.pan_speed = 0.0
         self.depth_speed = 0.0

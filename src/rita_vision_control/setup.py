@@ -12,7 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        (os.path.join('share', package_name, 'models'), glob('models/*.tflite')),
+        (os.path.join('share', package_name, 'models'), glob('models/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,6 +27,7 @@ setup(
             'visual_servo_node = rita_vision_control.visual_servo_node:main',
             'moveit_commander_node = rita_vision_control.moveit_commander_node:main',
             'servo_commander_node = rita_vision_control.servo_commander_node:main',
+            'yolo_webrtc_node = rita_vision_control.yolo_webrtc_node:main',
         ],
     },
 )
